@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>書類進行カンバン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f5efe3;
+  --paper-2:#efe7d6;
+  --paper-3:#e8ddc8;
+  --ink:#2b2a26;
+  --ink-soft:#5c584e;
+  --navy:#1f3a5f;
+  --navy-deep:#16293f;
+  --shu:#c73e2c;         /* 朱 */
+  --shu-soft:#f3d9d3;
+  --line:#d8cdb6;
+  --card:#fdfaf3;
+  --shadow:0 2px 8px rgba(43,42,38,.10);
+  --serif:'Shippori Mincho',serif;
+  --sans:'Zen Kaku Gothic New',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--sans);color:var(--ink);background:var(--paper);
+  background-image:radial-gradient(rgba(43,42,38,.028) 1px,transparent 1px);
+  background-size:22px 22px;
+  display:flex;flex-direction:column;min-height:100vh;
+}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:14px;color:var(--ink)}
+
+/* ===== ヘッダー ===== */
+header{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:14px 22px 12px;border-bottom:3px double var(--navy);
+  background:linear-gradient(180deg,#faf5ea,var(--paper));
+}
+.title-block h1{
+  font-family:var(--serif);font-size:22px;font-weight:700;color:var(--navy-deep);
+  letter-spacing:.14em;display:flex;align-items:center;gap:10px;
+}
+.title-stamp{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border:2.5px solid var(--shu);border-radius:7px;
+  color:var(--shu);font-family:var(--serif);font-size:15px;font-weight:700;
+  transform:rotate(-7deg);background:rgba(199,62,44,.05);flex:none;
+}
+.subtitle{font-size:11.5px;color:var(--ink-soft);letter-spacing:.08em;margin-top:2px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink-soft);margin-left:auto;align-items:center;flex-wrap:wrap}
+.legend .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:-1px}
+.dot-private{background:var(--navy)}
+.dot-shared{background:var(--shu)}
+.btn{
+  border:1px solid var(--navy);background:#fff;color:var(--navy);
+  border-radius:6px;padding:7px 14px;font-size:13px;font-weight:500;
+  transition:background .15s,color .15s;
+}
+.btn:hover{background:var(--navy);color:#fff}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-deep)}
+.btn-danger{border-color:var(--shu);color:var(--shu)}
+.btn-danger:hover{background:var(--shu);color:#fff}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--ink-soft)}
+.btn-ghost:hover{background:var(--paper-3);color:var(--ink)}
+
+/* ===== バナー ===== */
+#bannerArea{display:flex;flex-direction:column;gap:1px}
+.banner{
+  display:flex;align-items:center;gap:12px;padding:8px 22px;font-size:12.5px;
+}
+.banner-warn{background:#f7ead2;border-bottom:1px solid #e0c489;color:#6b4e12}
+.banner-error{background:var(--shu-soft);border-bottom:1px solid #dda99f;color:#7c2417}
+.banner-info{background:#dfe7f0;border-bottom:1px solid #b6c6d9;color:var(--navy-deep)}
+.banner .banner-actions{margin-left:auto;display:flex;gap:8px}
+.banner button{border:1px solid currentColor;background:transparent;color:inherit;border-radius:5px;padding:3px 10px;font-size:12px}
+
+/* ===== タブ ===== */
+#tabRow{
+  display:flex;align-items:flex-end;gap:4px;padding:12px 22px 0;overflow-x:auto;
+  scrollbar-width:thin;
+}
+.tab{
+  display:flex;align-items:center;gap:7px;white-space:nowrap;
+  border:1px solid var(--line);border-bottom:none;background:var(--paper-2);
+  color:var(--ink-soft);border-radius:8px 8px 0 0;padding:8px 16px;font-size:13.5px;
+  font-family:var(--serif);font-weight:600;letter-spacing:.04em;
+}
+.tab.active{background:var(--card);color:var(--navy-deep);border-color:var(--navy);
+  box-shadow:0 -2px 6px rgba(31,58,95,.10);position:relative;top:1px}
+.tab .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.tab .lock{font-size:11px}
+.tab-add{border-style:dashed;color:var(--ink-soft);font-family:var(--sans);font-weight:500}
+.tab-add:hover{color:var(--navy);border-color:var(--navy)}
+
+/* ===== ツールバー ===== */
+#toolbar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 22px;border-top:1px solid var(--navy);border-bottom:1px solid var(--line);
+  background:var(--card);
+}
+.scope-badge{
+  font-size:12px;font-weight:700;padding:3px 12px;border-radius:99px;letter-spacing:.1em;
+}
+.scope-private{background:#e2e9f2;color:var(--navy-deep);border:1px solid var(--navy)}
+.scope-shared{background:var(--shu-soft);color:#8c2f1f;border:1px solid var(--shu)}
+#toolbar select{
+  padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;
+}
+.toolbar-spacer{flex:1}
+
+/* ===== ボード ===== */
+#boardArea{flex:1;overflow-x:auto;padding:18px 22px 30px}
+.board-grid{display:flex;gap:14px;align-items:flex-start;min-height:200px}
+.column{
+  width:272px;flex:none;background:var(--paper-2);border:1px solid var(--line);
+  border-radius:10px;display:flex;flex-direction:column;max-height:calc(100vh - 230px);
+}
+.column.drag-over{outline:2px dashed var(--navy);outline-offset:-2px}
+.col-head{
+  display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:grab;
+  border-bottom:2px solid var(--navy);
+}
+.col-head:active{cursor:grabbing}
+.col-title{
+  font-family:var(--serif);font-weight:700;font-size:14.5px;color:var(--navy-deep);
+  letter-spacing:.06em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  cursor:pointer;border-radius:4px;padding:2px 4px;
+}
+.col-title:hover{background:rgba(31,58,95,.08)}
+.col-title input{
+  width:100%;font-family:var(--serif);font-weight:700;font-size:14.5px;
+  border:1px solid var(--navy);border-radius:4px;padding:1px 4px;background:#fff;
+}
+.col-count{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);background:var(--paper-3);
+  padding:1px 8px;border-radius:99px}
+.col-del{border:none;background:none;color:var(--ink-soft);font-size:15px;line-height:1;padding:2px 5px;border-radius:4px}
+.col-del:hover{color:var(--shu);background:rgba(199,62,44,.1)}
+.stamp{
+  display:inline-flex;align-items:center;justify-content:center;flex:none;
+  width:22px;height:22px;border:2px solid var(--shu);border-radius:5px;
+  color:var(--shu);font-family:var(--serif);font-size:12px;font-weight:700;
+  transform:rotate(-8deg);background:rgba(199,62,44,.06);
+}
+.stamp-sm{width:18px;height:18px;font-size:10px;border-width:1.5px}
+.card-list{padding:10px;display:flex;flex-direction:column;gap:9px;overflow-y:auto;flex:1;min-height:40px}
+.add-card-btn{
+  margin:0 10px 10px;padding:7px;border:1px dashed var(--line);background:transparent;
+  border-radius:7px;color:var(--ink-soft);font-size:12.5px;
+}
+.add-card-btn:hover{border-color:var(--navy);color:var(--navy);background:rgba(31,58,95,.04)}
+.add-col{
+  width:230px;flex:none;border:1.5px dashed var(--line);border-radius:10px;
+  background:transparent;color:var(--ink-soft);padding:16px;font-size:13px;
+  font-family:var(--serif);letter-spacing:.05em;
+}
+.add-col:hover{border-color:var(--navy);color:var(--navy)}
+
+/* ===== カード ===== */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:8px;
+  padding:10px 11px 9px;cursor:pointer;box-shadow:var(--shadow);position:relative;
+  border-left:4px solid transparent;
+}
+.card:hover{border-color:var(--navy);border-left-color:var(--navy)}
+.card.dragging{opacity:.45}
+.card[data-color]{border-left-width:5px}
+.card .card-title{font-size:13.5px;font-weight:500;line-height:1.45;word-break:break-word}
+.card .card-stamp{position:absolute;top:8px;right:8px}
+.card-meta{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+.assignee-chip{
+  font-size:10.5px;padding:1px 8px;border-radius:99px;color:#fff;font-weight:500;letter-spacing:.03em;
+}
+.due{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+.due.overdue{color:var(--shu);font-weight:600}
+.due.overdue::before{content:"⚠ "}
+.todo-progress{margin-top:7px}
+.todo-progress .tp-label{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft)}
+.tp-bar{height:4px;background:var(--paper-3);border-radius:99px;margin-top:3px;overflow:hidden}
+.tp-fill{height:100%;background:var(--navy);border-radius:99px;transition:width .2s}
+.tp-fill.done{background:#4e8d63}
+
+/* ===== 空状態 ===== */
+.empty-state{
+  text-align:center;color:var(--ink-soft);padding:70px 20px;font-family:var(--serif);
+  letter-spacing:.08em;font-size:14px;
+}
+
+/* ===== ロック画面 ===== */
+.lock-screen{
+  max-width:420px;margin:60px auto;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:34px 30px;text-align:center;box-shadow:var(--shadow);
+}
+.lock-screen .lock-icon{font-size:34px;margin-bottom:10px}
+.lock-screen h2{font-family:var(--serif);font-size:17px;color:var(--navy-deep);letter-spacing:.1em;margin-bottom:6px}
+.lock-screen p{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px}
+.lock-screen input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:7px;margin-bottom:6px}
+.lock-error{color:var(--shu);font-size:12px;min-height:18px;margin-bottom:6px}
+
+/* ===== モーダル ===== */
+#modalBackdrop{
+  position:fixed;inset:0;background:rgba(43,42,38,.45);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#modalBackdrop[hidden]{display:none}
+.modal{
+  background:var(--card);border-radius:12px;border-top:4px solid var(--navy);
+  width:min(440px,100%);max-height:88vh;overflow-y:auto;padding:22px 24px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+.modal h3{font-family:var(--serif);font-size:16px;color:var(--navy-deep);letter-spacing:.08em;margin-bottom:14px}
+.modal .field{margin-bottom:14px}
+.modal label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;letter-spacing:.05em}
+.modal input[type=text],.modal input[type=password],.modal input[type=date],.modal textarea,.modal select{
+  width:100%;padding:8px 11px;border:1px solid var(--line);border-radius:7px;background:#fff;
+}
+.modal textarea{resize:vertical;min-height:70px}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
+.radio-row{display:flex;gap:10px}
+.radio-card{
+  flex:1;border:1.5px solid var(--line);border-radius:8px;padding:10px;cursor:pointer;
+  text-align:center;font-size:13px;background:#fff;
+}
+.radio-card input{display:none}
+.radio-card.checked{border-color:var(--navy);background:#eef2f7;font-weight:700}
+.radio-card .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
+.note-box{
+  background:#f7ead2;border:1px solid #e0c489;color:#6b4e12;border-radius:7px;
+  padding:9px 11px;font-size:11.5px;line-height:1.6;margin-bottom:12px;
+}
+.assignee-grid{display:flex;flex-direction:column;gap:8px}
+.assignee-row{display:flex;align-items:center;gap:10px}
+.assignee-row .swatch{width:20px;height:20px;border-radius:5px;flex:none}
+.assignee-row .cname{font-size:11px;color:var(--ink-soft);width:52px;flex:none;font-family:var(--serif)}
+.assignee-row input{flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:6px}
+
+/* ===== 詳細パネル ===== */
+#panelOverlay{position:fixed;inset:0;background:rgba(43,42,38,.25);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
+#panelOverlay.open{opacity:1;pointer-events:auto}
+#detailPanel{
+  position:fixed;top:0;right:0;bottom:0;width:min(420px,94vw);z-index:90;
+  background:var(--card);border-left:3px solid var(--navy);box-shadow:-8px 0 30px rgba(0,0,0,.18);
+  transform:translateX(105%);transition:transform .25s ease;display:flex;flex-direction:column;
+}
+#detailPanel.open{transform:translateX(0)}
+.panel-head{
+  display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:2px solid var(--navy);
+  font-family:var(--serif);font-weight:700;color:var(--navy-deep);letter-spacing:.1em;
+}
+.panel-close{margin-left:auto;border:none;background:none;font-size:20px;color:var(--ink-soft);padding:2px 8px;border-radius:5px}
+.panel-close:hover{background:var(--paper-3)}
+.panel-body{flex:1;overflow-y:auto;padding:16px 18px 24px}
+.panel-body .field{margin-bottom:16px}
+.panel-body label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;letter-spacing:.06em}
+.panel-body textarea,.panel-body input[type=date],.panel-body select{
+  width:100%;padding:8px 11px;border:1px solid var(--line);border-radius:7px;background:#fff;
+}
+.panel-body textarea{resize:vertical}
+#dTitle{font-size:15px;font-weight:700;min-height:56px;line-height:1.5}
+#dMemo{min-height:90px;font-size:13px;line-height:1.6}
+.color-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.color-cell{
+  height:32px;border-radius:7px;border:2px solid transparent;cursor:pointer;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.color-cell.none{background:#fff;border:1.5px dashed var(--line);color:var(--ink-soft);font-size:10px}
+.color-cell.selected{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+.color-cell .ck{color:#fff;font-size:13px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.color-cell.none .ck{color:var(--ink);text-shadow:none}
+.selected-assignee{font-size:11.5px;color:var(--ink-soft);margin-top:6px}
+.todo-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.todo-item{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 9px}
+.todo-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--navy);flex:none;cursor:pointer}
+.todo-item .todo-text{flex:1;font-size:13px;word-break:break-word}
+.todo-item.done .todo-text{text-decoration:line-through;color:var(--ink-soft)}
+.todo-del{border:none;background:none;color:var(--ink-soft);font-size:14px;padding:1px 5px;border-radius:4px}
+.todo-del:hover{color:var(--shu)}
+.todo-add-row{display:flex;gap:7px}
+.todo-add-row input{flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:7px}
+.panel-footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.panel-created{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft)}
+
+/* ===== トースト ===== */
+#toastArea{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:9px;max-width:min(360px,90vw)}
+.toast{
+  background:#33312c;color:#f5efe3;border-radius:9px;padding:11px 14px;font-size:12.5px;
+  box-shadow:0 6px 22px rgba(0,0,0,.3);border-left:4px solid var(--shu);line-height:1.55;
+}
+.toast.info{border-left-color:var(--navy)}
+.toast .toast-actions{display:flex;gap:8px;margin-top:8px}
+.toast button{border:1px solid rgba(245,239,227,.5);background:transparent;color:#f5efe3;border-radius:5px;padding:3px 11px;font-size:12px}
+.toast button:hover{background:rgba(245,239,227,.15)}
+
+/* ===== レスポンシブ ===== */
+@media (max-width:980px){
+  .board-grid{flex-direction:column}
+  .column,.add-col{width:100%;max-height:none}
+  header{padding:12px 14px}
+  #tabRow,#toolbar,#boardArea{padding-left:14px;padding-right:14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1><span class="title-stamp">印</span>書類進行カンバン</h1>
+    <div class="subtitle">取締役会議事録・契約書等の進行状況を一元管理</div>
+  </div>
+  <div class="legend">
+    <span><span class="dot dot-private"></span>個人用（自分のみ）</span>
+    <span><span class="dot dot-shared"></span>共有（全員で閲覧・編集）</span>
+    <button class="btn btn-sm" id="reloadBtn">⟳ 再読み込み</button>
+  </div>
+</header>
+
+<div id="bannerArea"></div>
+<nav id="tabRow"></nav>
+<div id="toolbar"></div>
+<main id="boardArea"></main>
+
+<div id="panelOverlay"></div>
+<aside id="detailPanel" aria-hidden="true"></aside>
+
+<div id="modalBackdrop" hidden><div class="modal" id="modalBox"></div></div>
+<div id="toastArea"></div>
+
+<script>
+'use strict';
+/* ==========================================================
+ * 設定（F-52）: 共有データ用 外部DB（Supabase / PostgREST）
+ * 未設定（空文字）の場合は自動フォールバックします。
+ *  - Claudeアーティファクト環境 → 共有ストレージ（window.storage 共有モード）
+ *  - 単独Webページ環境 → localStorage（※端末内のみ。他者とは共有されません）
+ * ========================================================== */
+const SUPABASE_URL = 'https://vbdehzvtfiebjejhihos.supabase.co'; // /rest/v1/付きでも自動補正
+const SUPABASE_ANON_KEY = 'sb_publishable_8GW5Ep4hPGaiYXePougnuQ_Z7tnQ4Kq'; // 公開キーのみ。secret/service_roleキーは絶対に書かないこと
+const SUPABASE_TABLE = 'kanban_store'; // 列: id text primary key, data jsonb, updated_at timestamptz
+
+const PRIV_KEY = 'dockanban_private_v1';
+const SHARED_KEY = 'dockanban_shared_v1';
+const UNLOCK_KEY = 'dockanban_unlocked_v1';
+const SAVE_DEBOUNCE = 150;
+
+const PALETTE = [
+  {name:'蘇芳',   color:'#973C3F'},
+  {name:'藍',     color:'#165E83'},
+  {name:'山吹',   color:'#D9A400'},
+  {name:'若竹',   color:'#57A87C'},
+  {name:'江戸紫', color:'#745399'},
+  {name:'柿',     color:'#D96C3D'},
+  {name:'鴇',     color:'#D98CA0'},
+  {name:'露草',   color:'#3888C7'},
+  {name:'萌黄',   color:'#8CA845'},
+  {name:'鈍色',   color:'#727171'},
+];
+const DEFAULT_PHASES = ['ドラフト中','内容確定','押印済み','郵送済み','完了'];
+
+/* ===== ユーティリティ ===== */
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayStr = () => { const d=new Date(),p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
+const hasStamp = label => String(label||'').includes('印');
+
+/* ===== 実行環境判定（3章）===== */
+function detectClaudeEnv(){
+  try{
+    const s = window.storage;
+    return !!(s && (typeof s.get === 'function' || typeof s.getItem === 'function'));
+  }catch(e){ return false; }
+}
+const IS_CLAUDE = detectClaudeEnv();
+
+/* window.storage のAPI差異を吸収するラッパー */
+async function claudeGet(key, shared){
+  const s = window.storage;
+  let r;
+  if (typeof s.get === 'function') r = await s.get(key, shared);
+  else r = await s.getItem(key, shared);
+  if (r && typeof r === 'object' && 'value' in r) r = r.value;
+  return (r === undefined || r === null) ? null : r;
+}
+async function claudeSet(key, value, shared){
+  const s = window.storage;
+  if (typeof s.set === 'function') return await s.set(key, value, shared);
+  return await s.setItem(key, value, shared);
+}
+
+/* ===== 個人用ストレージ（F-51）===== */
+let privStorageOk = true;
+async function privRead(key){
+  try{
+    if (IS_CLAUDE) {
+      const v = await claudeGet(key, false);
+      return v ? JSON.parse(typeof v === 'string' ? v : JSON.stringify(v)) : null;
+    }
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
+  }catch(e){
+    privStorageOk = false;
+    showBanner('privErr','warn',`個人用データの読み込みに失敗しました（プライベート保存機能が使えない可能性があります）: ${esc(e.message)}`);
+    return null;
+  }
+}
+async function privWrite(key, obj){
+  try{
+    const json = JSON.stringify(obj);
+    if (IS_CLAUDE) await claudeSet(key, json, false);
+    else localStorage.setItem(key, json);
+    privStorageOk = true;
+    removeBanner('privErr');
+  }catch(e){
+    privStorageOk = false;
+    toast(`個人用データの保存に失敗しました: ${esc(e.message)}`, 'error', ()=>schedulePrivSave());
+  }
+}
+
+/* ===== 共有ストレージ（F-52〜F-54）===== */
+/* F-54: /rest/v1/ を含むフルパスが設定されてもベースURLに自動補正 */
+function supaBase(){
+  return String(SUPABASE_URL||'').replace(/\/rest\/v1\/?.*$/,'').replace(/\/+$/,'');
+}
+const SUPA_ON = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+function supaHeaders(extra){
+  return Object.assign({
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+    'Content-Type': 'application/json',
+  }, extra||{});
+}
+async function sharedRead(){
+  if (SUPA_ON) {
+    const url = `${supaBase()}/rest/v1/${SUPABASE_TABLE}?id=eq.main&select=data`;
+    const res = await fetch(url, {headers: supaHeaders()});
+    if (!res.ok) throw new Error(`外部DB応答 ${res.status}: ${(await res.text()).slice(0,120)}`);
+    const rows = await res.json();
+    return rows.length ? rows[0].data : null;
+  }
+  if (IS_CLAUDE) {
+    const v = await claudeGet(SHARED_KEY, true);
+    return v ? JSON.parse(typeof v === 'string' ? v : JSON.stringify(v)) : null;
+  }
+  const v = localStorage.getItem(SHARED_KEY);
+  return v ? JSON.parse(v) : null;
+}
+async function sharedWrite(data){
+  if (SUPA_ON) {
+    const url = `${supaBase()}/rest/v1/${SUPABASE_TABLE}?on_conflict=id`;
+    const res = await fetch(url, {
+      method:'POST',
+      headers: supaHeaders({'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body: JSON.stringify([{id:'main', data, updated_at:new Date().toISOString()}]),
+    });
+    if (!res.ok) throw new Error(`外部DB応答 ${res.status}: ${(await res.text()).slice(0,120)}`);
+    return;
+  }
+  if (IS_CLAUDE) { await claudeSet(SHARED_KEY, JSON.stringify(data), true); return; }
+  localStorage.setItem(SHARED_KEY, JSON.stringify(data));
+}
+
+/* ===== ハッシュ（F-41）===== */
+async function hashText(text){
+  try{
+    if (crypto && crypto.subtle && crypto.subtle.digest) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+      return 'sha256:' + Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){ /* fallthrough */ }
+  /* 代替の簡易ハッシュ（FNV-1a風） */
+  let h1 = 0x811c9dc5, h2 = 0x01000193;
+  for (let i=0;i<text.length;i++){
+    const c = text.charCodeAt(i);
+    h1 = (h1 ^ c) >>> 0; h1 = (h1 * 0x01000193) >>> 0;
+    h2 = (h2 + c * (i+7)) >>> 0; h2 = ((h2 << 5) | (h2 >>> 27)) >>> 0;
+  }
+  return 'fnv:' + h1.toString(16) + h2.toString(16);
+}
+
+/* ===== 状態 ===== */
+const state = {
+  priv:   {boards:[], cards:[]},
+  shared: {boards:[], cards:[]},
+  activeBoardId: null,
+  filter: 'all',            // 'all' | 'none' | '0'〜'9'
+  unlocked: [],             // 解除済みカテゴリID一覧（F-43）
+  editingCardId: null,
+};
+function storeOf(scope){ return scope === 'shared' ? state.shared : state.priv; }
+function allBoards(){
+  return [...state.priv.boards, ...state.shared.boards].sort((a,b)=>a.createdAt-b.createdAt);
+}
+function activeBoard(){
+  return allBoards().find(b=>b.id===state.activeBoardId) || null;
+}
+function boardCards(board){
+  return storeOf(board.scope).cards.filter(c=>c.boardId===board.id);
+}
+function isLocked(board){
+  return !!board.passwordHash && !state.unlocked.includes(board.id);
+}
+function findCard(id){
+  return state.priv.cards.find(c=>c.id===id) || state.shared.cards.find(c=>c.id===id) || null;
+}
+
+/* ===== マイグレーション（5章）===== */
+function migrate(data, scope){
+  const d = (data && typeof data === 'object') ? data : {};
+  const boards = Array.isArray(d.boards) ? d.boards : [];
+  const cards  = Array.isArray(d.cards)  ? d.cards  : [];
+  boards.forEach(b=>{
+    b.id = b.id || uid();
+    b.name = String(b.name || '無題カテゴリ').slice(0,40);
+    b.scope = scope;
+    if (!Array.isArray(b.phases) || !b.phases.length)
+      b.phases = DEFAULT_PHASES.map(l=>({id:uid(), label:l}));
+    b.phases.forEach(p=>{ p.id = p.id || uid(); p.label = String(p.label||'').slice(0,12) || 'フェーズ'; });
+    if (!('passwordHash' in b)) b.passwordHash = null;
+    if (!Array.isArray(b.assigneeNames)) b.assigneeNames = Array(10).fill('');
+    while (b.assigneeNames.length < 10) b.assigneeNames.push('');
+    b.createdAt = b.createdAt || Date.now();
+  });
+  cards.forEach(c=>{
+    c.id = c.id || uid();
+    c.scope = scope;
+    c.title = String(c.title || '').slice(0,80);
+    c.memo = String(c.memo || '');
+    c.dueDate = c.dueDate || '';
+    if (!Array.isArray(c.todos)) c.todos = [];
+    c.todos.forEach(t=>{ t.id = t.id || uid(); t.text = String(t.text||''); t.done = !!t.done; });
+    if (typeof c.colorIndex !== 'number' || c.colorIndex < 0 || c.colorIndex > 9) c.colorIndex = (c.colorIndex===0)?0:null;
+    c.createdAt = c.createdAt || Date.now();
+  });
+  /* 所属カテゴリが存在しないカードは除外、フェーズ不整合は先頭フェーズへ */
+  const validCards = cards.filter(c => boards.some(b=>b.id===c.boardId));
+  validCards.forEach(c=>{
+    const b = boards.find(x=>x.id===c.boardId);
+    if (!b.phases.some(p=>p.id===c.phase)) c.phase = b.phases[0].id;
+  });
+  return {boards, cards: validCards};
+}
+
+/* ===== デバウンス保存（F-50）===== */
+let privTimer = null, sharedTimer = null;
+function schedulePrivSave(){
+  clearTimeout(privTimer);
+  privTimer = setTimeout(()=>privWrite(PRIV_KEY, state.priv), SAVE_DEBOUNCE);
+}
+function scheduleSharedSave(){
+  clearTimeout(sharedTimer);
+  sharedTimer = setTimeout(async ()=>{
+    try{
+      await sharedWrite(state.shared);
+      removeBanner('sharedErr');
+    }catch(e){
+      toast(`共有データの保存に失敗しました（外部データベースへの接続エラー）: ${esc(e.message)}`, 'error', ()=>scheduleSharedSave());
+    }
+  }, SAVE_DEBOUNCE);
+}
+function saveScope(scope){ scope==='shared' ? scheduleSharedSave() : schedulePrivSave(); }
+function saveUnlocked(){ privWrite(UNLOCK_KEY, state.unlocked); }
+
+/* ===== 読み込み ===== */
+async function loadPrivate(){
+  const d = await privRead(PRIV_KEY);
+  state.priv = migrate(d, 'private');
+  const u = await privRead(UNLOCK_KEY);
+  state.unlocked = Array.isArray(u) ? u : [];
+}
+async function loadShared(){
+  try{
+    const d = await sharedRead();
+    state.shared = migrate(d, 'shared');
+    removeBanner('sharedErr');
+    return true;
+  }catch(e){
+    showBanner('sharedErr','error',
+      `共有データの取得に失敗しました（外部データベースへの接続エラー）: ${esc(e.message)}`,
+      [{label:'再試行', fn: async ()=>{ if(await loadShared()) render(); }}]);
+    return false;
+  }
+}
+
+/* ==========================================================
+ * 通知（バナー / トースト）F-55, F-56
+ * ========================================================== */
+function showBanner(id, kind, msg, actions){
+  removeBanner(id);
+  const el = document.createElement('div');
+  el.className = `banner banner-${kind}`;
+  el.dataset.bannerId = id;
+  el.innerHTML = `<span>${msg}</span><span class="banner-actions"></span>`;
+  const box = el.querySelector('.banner-actions');
+  (actions||[]).forEach(a=>{
+    const b = document.createElement('button');
+    b.textContent = a.label;
+    b.onclick = ()=>a.fn();
+    box.appendChild(b);
+  });
+  const close = document.createElement('button');
+  close.textContent = '閉じる';
+  close.onclick = ()=>el.remove();
+  box.appendChild(close);
+  $('#bannerArea').appendChild(el);
+}
+function removeBanner(id){
+  const el = document.querySelector(`[data-banner-id="${id}"]`);
+  if (el) el.remove();
+}
+function toast(msg, kind, retryFn){
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind==='info' ? ' info' : '');
+  el.innerHTML = `<div>${msg}</div><div class="toast-actions"></div>`;
+  const box = el.querySelector('.toast-actions');
+  if (retryFn){
+    const r = document.createElement('button');
+    r.textContent = '再試行';
+    r.onclick = ()=>{ retryFn(); el.remove(); };
+    box.appendChild(r);
+  }
+  const c = document.createElement('button');
+  c.textContent = '閉じる';
+  c.onclick = ()=>el.remove();
+  box.appendChild(c);
+  $('#toastArea').appendChild(el);
+  if (kind==='info') setTimeout(()=>el.remove(), 6000);
+}
+
+/* ==========================================================
+ * 汎用モーダル（F-56: ネイティブダイアログ不使用）
+ * ========================================================== */
+function openModal(html, setup){
+  const bd = $('#modalBackdrop'), box = $('#modalBox');
+  box.innerHTML = html;
+  bd.hidden = false;
+  if (setup) setup(box);
+  const first = box.querySelector('input,textarea,select');
+  if (first) setTimeout(()=>first.focus(), 30);
+}
+function closeModal(){ $('#modalBackdrop').hidden = true; $('#modalBox').innerHTML=''; }
+$('#modalBackdrop').addEventListener('mousedown', e=>{ if (e.target === $('#modalBackdrop')) closeModal(); });
+
+function confirmModal(title, msg, okLabel, onOk){
+  openModal(`
+    <h3>${esc(title)}</h3>
+    <p style="font-size:13px;line-height:1.7">${msg}</p>
+    <div class="modal-actions">
+      <button class="btn" data-act="cancel">キャンセル</button>
+      <button class="btn btn-danger" data-act="ok">${esc(okLabel||'OK')}</button>
+    </div>`, box=>{
+    box.querySelector('[data-act=cancel]').onclick = closeModal;
+    box.querySelector('[data-act=ok]').onclick = ()=>{ closeModal(); onOk(); };
+  });
+}
+function notifyModal(title, msg){
+  openModal(`
+    <h3>${esc(title)}</h3>
+    <p style="font-size:13px;line-height:1.7">${msg}</p>
+    <div class="modal-actions"><button class="btn btn-primary" data-act="ok">OK</button></div>`,
+    box=>{ box.querySelector('[data-act=ok]').onclick = closeModal; });
+}
+
+/* ==========================================================
+ * レンダリング
+ * ========================================================== */
+function render(){
+  renderTabs();
+  renderToolbar();
+  renderBoard();
+}
+
+/* ----- タブ（F-04, F-45）----- */
+function renderTabs(){
+  const row = $('#tabRow');
+  row.innerHTML = '';
+  allBoards().forEach(b=>{
+    const t = document.createElement('button');
+    t.className = 'tab' + (b.id===state.activeBoardId ? ' active' : '');
+    t.innerHTML = `<span class="dot ${b.scope==='shared'?'dot-shared':'dot-private'}"></span>` +
+      `<span>${esc(b.name)}</span>` + (b.passwordHash ? '<span class="lock">🔒</span>' : '');
+    t.onclick = ()=>{
+      if (state.activeBoardId !== b.id){
+        state.activeBoardId = b.id;
+        state.filter = 'all'; /* F-34: カテゴリ切替で絞り込みリセット */
+        closePanel();
+        render();
+      }
+    };
+    row.appendChild(t);
+  });
+  const add = document.createElement('button');
+  add.className = 'tab tab-add';
+  add.textContent = '＋ 新規カテゴリ';
+  add.onclick = openNewBoardModal;
+  row.appendChild(add);
+}
+
+/* ----- ツールバー ----- */
+function renderToolbar(){
+  const tb = $('#toolbar');
+  tb.innerHTML = '';
+  const b = activeBoard();
+  if (!b) return;
+  const scope = document.createElement('span');
+  scope.className = 'scope-badge ' + (b.scope==='shared'?'scope-shared':'scope-private');
+  scope.textContent = b.scope==='shared' ? '共有' : '個人用';
+  tb.appendChild(scope);
+  if (isLocked(b)) return;
+
+  /* F-34: 担当者絞り込み */
+  const sel = document.createElement('select');
+  sel.innerHTML = `<option value="all">担当者: すべて表示</option>` +
+    PALETTE.map((p,i)=>`<option value="${i}">${esc(b.assigneeNames[i] || p.name)}</option>`).join('') +
+    `<option value="none">未割り当てのみ</option>`;
+  sel.value = state.filter;
+  sel.onchange = ()=>{ state.filter = sel.value; renderBoard(); };
+  tb.appendChild(sel);
+
+  const mkBtn = (label, fn, cls)=>{
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm ' + (cls||'');
+    btn.textContent = label;
+    btn.onclick = fn;
+    tb.appendChild(btn);
+    return btn;
+  };
+  mkBtn('👤 担当者管理', ()=>openAssigneeModal(b));
+  if (b.scope === 'shared')
+    mkBtn((b.passwordHash?'🔒':'🔓') + ' パスワード', ()=>openPasswordModal(b));
+  mkBtn('＋ フェーズ追加', ()=>openNewPhaseModal(b));
+  const sp = document.createElement('span'); sp.className='toolbar-spacer'; tb.appendChild(sp);
+  mkBtn('🗑 カテゴリ削除', ()=>{
+    confirmModal('カテゴリの削除',
+      `カテゴリ「<b>${esc(b.name)}</b>」を削除しますか？<br><b style="color:var(--shu)">このカテゴリ内のすべてのカード（${boardCards(b).length}件）も削除されます。</b>この操作は取り消せません。`,
+      '削除する', ()=>{
+        const st = storeOf(b.scope);
+        st.boards = st.boards.filter(x=>x.id!==b.id);
+        st.cards  = st.cards.filter(c=>c.boardId!==b.id);
+        state.activeBoardId = allBoards()[0]?.id || null;
+        saveScope(b.scope);
+        closePanel(); render();
+      });
+  }, 'btn-danger');
+}
+
+/* ----- ボード本体 ----- */
+function renderBoard(){
+  const area = $('#boardArea');
+  area.innerHTML = '';
+  const b = activeBoard();
+  if (!b){
+    area.innerHTML = `<div class="empty-state">カテゴリがありません。<br>上の「＋ 新規カテゴリ」から作成してください。</div>`;
+    return;
+  }
+  if (isLocked(b)){ renderLockScreen(area, b); return; }
+
+  const grid = document.createElement('div');
+  grid.className = 'board-grid';
+  const cards = boardCards(b);
+
+  b.phases.forEach(phase=>{
+    grid.appendChild(renderColumn(b, phase, cards.filter(c=>c.phase===phase.id)));
+  });
+
+  const addCol = document.createElement('button');
+  addCol.className = 'add-col';
+  addCol.textContent = '＋ フェーズを追加';
+  addCol.onclick = ()=>openNewPhaseModal(b);
+  grid.appendChild(addCol);
+  area.appendChild(grid);
+}
+
+function renderColumn(board, phase, cards){
+  const col = document.createElement('section');
+  col.className = 'column';
+  col.dataset.phaseId = phase.id;
+
+  /* 見出し */
+  const head = document.createElement('div');
+  head.className = 'col-head';
+  head.draggable = true;
+  const stampHtml = hasStamp(phase.label) ? `<span class="stamp">印</span>` : '';
+  head.innerHTML = `${stampHtml}<span class="col-title" title="クリックで名称変更">${esc(phase.label)}</span>
+    <span class="col-count">${cards.length}</span>
+    <button class="col-del" title="フェーズを削除">✕</button>`;
+
+  /* F-12: インライン名称編集 */
+  head.querySelector('.col-title').onclick = e=>{
+    const span = e.currentTarget;
+    const input = document.createElement('input');
+    input.maxLength = 12; input.value = phase.label;
+    span.replaceWith(input); input.focus(); input.select();
+    const commit = ()=>{
+      const v = input.value.trim().slice(0,12);
+      if (v) phase.label = v;
+      saveScope(board.scope); renderBoard();
+    };
+    input.onblur = commit;
+    input.onkeydown = ev=>{ if(ev.key==='Enter') input.blur(); if(ev.key==='Escape'){ input.onblur=null; renderBoard(); } };
+  };
+
+  /* F-13: フェーズ削除 */
+  head.querySelector('.col-del').onclick = ()=>{
+    if (board.phases.length <= 1){
+      notifyModal('削除できません','カテゴリ内のフェーズが1つしかないため、このフェーズは削除できません。');
+      return;
+    }
+    const idx = board.phases.findIndex(p=>p.id===phase.id);
+    const neighbor = board.phases[idx-1] || board.phases[idx+1];
+    const moving = cards.length;
+    confirmModal('フェーズの削除',
+      `フェーズ「<b>${esc(phase.label)}</b>」を削除しますか？` +
+      (moving ? `<br>フェーズ内の ${moving} 件のカードは隣接フェーズ「${esc(neighbor.label)}」へ自動的に移動します。` : ''),
+      '削除する', ()=>{
+        storeOf(board.scope).cards.forEach(c=>{ if(c.boardId===board.id && c.phase===phase.id) c.phase = neighbor.id; });
+        board.phases.splice(idx,1);
+        saveScope(board.scope); renderBoard();
+      });
+  };
+
+  /* F-14: カラム並べ替えDnD */
+  head.addEventListener('dragstart', e=>{
+    e.dataTransfer.setData('text/plain', 'col:'+phase.id);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  col.appendChild(head);
+
+  /* カード一覧 */
+  const list = document.createElement('div');
+  list.className = 'card-list';
+  const filtered = cards.filter(c=>{
+    if (state.filter==='all') return true;
+    if (state.filter==='none') return c.colorIndex===null;
+    return c.colorIndex === Number(state.filter);
+  });
+  filtered.forEach(c=>list.appendChild(renderCard(board, c, phase)));
+  col.appendChild(list);
+
+  /* F-20: カード追加 */
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-card-btn';
+  addBtn.textContent = '＋ カード追加';
+  addBtn.onclick = ()=>openNewCardModal(board, phase);
+  col.appendChild(addBtn);
+
+  /* F-23 / F-14: ドロップ受け付け */
+  col.addEventListener('dragover', e=>{ e.preventDefault(); col.classList.add('drag-over'); });
+  col.addEventListener('dragleave', ()=>col.classList.remove('drag-over'));
+  col.addEventListener('drop', e=>{
+    e.preventDefault(); col.classList.remove('drag-over');
+    const data = e.dataTransfer.getData('text/plain') || '';
+    if (data.startsWith('card:')){
+      const card = findCard(data.slice(5));
+      if (card && card.boardId===board.id && card.phase!==phase.id){
+        card.phase = phase.id;
+        saveScope(board.scope); renderBoard();
+        if (state.editingCardId===card.id) refreshPanelPhase(card, board);
+      }
+    } else if (data.startsWith('col:')){
+      const srcId = data.slice(4);
+      if (srcId === phase.id) return;
+      const from = board.phases.findIndex(p=>p.id===srcId);
+      const to   = board.phases.findIndex(p=>p.id===phase.id);
+      if (from<0||to<0) return;
+      const [moved] = board.phases.splice(from,1);
+      board.phases.splice(to,0,moved);
+      saveScope(board.scope); renderBoard();
+    }
+  });
+  return col;
+}
+
+function renderCard(board, card, phase){
+  const el = document.createElement('article');
+  el.className = 'card';
+  el.draggable = true;
+  if (card.colorIndex !== null){
+    el.dataset.color = card.colorIndex;
+    el.style.borderLeftColor = PALETTE[card.colorIndex].color;
+  }
+  let html = `<div class="card-title">${esc(card.title)||'（無題）'}</div>`;
+  if (hasStamp(phase.label)) html += `<span class="stamp stamp-sm card-stamp">印</span>`;
+
+  const meta = [];
+  if (card.colorIndex !== null){
+    const nm = board.assigneeNames[card.colorIndex] || PALETTE[card.colorIndex].name;
+    meta.push(`<span class="assignee-chip" style="background:${PALETTE[card.colorIndex].color}">${esc(nm)}</span>`);
+  }
+  if (card.dueDate){
+    const over = card.dueDate < todayStr(); /* F-25 */
+    meta.push(`<span class="due${over?' overdue':''}">〆 ${esc(card.dueDate)}</span>`);
+  }
+  if (meta.length) html += `<div class="card-meta">${meta.join('')}</div>`;
+
+  /* F-24: Todo進捗 */
+  if (card.todos.length){
+    const done = card.todos.filter(t=>t.done).length;
+    const pct = Math.round(done/card.todos.length*100);
+    html += `<div class="todo-progress">
+      <span class="tp-label">☑ ${done} / ${card.todos.length}</span>
+      <div class="tp-bar"><div class="tp-fill${pct===100?' done':''}" style="width:${pct}%"></div></div></div>`;
+  }
+  el.innerHTML = html;
+  el.onclick = ()=>openPanel(board, card);
+  el.addEventListener('dragstart', e=>{
+    e.stopPropagation();
+    e.dataTransfer.setData('text/plain', 'card:'+card.id);
+    e.dataTransfer.effectAllowed = 'move';
+    el.classList.add('dragging');
+  });
+  el.addEventListener('dragend', ()=>el.classList.remove('dragging'));
+  return el;
+}
+
+/* ==========================================================
+ * カード詳細パネル（F-21, F-22, F-26）— 自動保存
+ * ========================================================== */
+function openPanel(board, card){
+  state.editingCardId = card.id;
+  const panel = $('#detailPanel');
+  const save = ()=>{ saveScope(board.scope); renderBoard(); };
+
+  panel.innerHTML = `
+    <div class="panel-head"><span>カード詳細</span><button class="panel-close" title="閉じる">✕</button></div>
+    <div class="panel-body">
+      <div class="field"><label>タイトル</label>
+        <textarea id="dTitle" maxlength="80"></textarea></div>
+      <div class="field"><label>所属フェーズ</label>
+        <select id="dPhase">${board.phases.map(p=>`<option value="${p.id}">${esc(p.label)}</option>`).join('')}</select></div>
+      <div class="field"><label>担当者カラー</label>
+        <div class="color-grid" id="dColors"></div>
+        <div class="selected-assignee" id="dAssignee"></div></div>
+      <div class="field"><label>期限</label>
+        <input type="date" id="dDue"></div>
+      <div class="field"><label>Todoチェックリスト</label>
+        <div class="todo-list" id="dTodos"></div>
+        <div class="todo-add-row">
+          <input type="text" id="dTodoNew" placeholder="Todoを追加してEnter">
+          <button class="btn btn-sm" id="dTodoAdd">追加</button></div></div>
+      <div class="field"><label>メモ</label>
+        <textarea id="dMemo" placeholder="自由記述"></textarea></div>
+    </div>
+    <div class="panel-footer">
+      <span class="panel-created">作成: ${new Date(card.createdAt).toLocaleString('ja-JP')}</span>
+      <button class="btn btn-sm btn-danger" id="dDelete">🗑 カードを削除</button>
+    </div>`;
+
+  panel.querySelector('.panel-close').onclick = closePanel;
+
+  const title = panel.querySelector('#dTitle');
+  title.value = card.title;
+  title.oninput = ()=>{ card.title = title.value.slice(0,80); save(); };
+
+  const phaseSel = panel.querySelector('#dPhase');
+  phaseSel.value = card.phase;
+  phaseSel.onchange = ()=>{ card.phase = phaseSel.value; save(); };
+
+  /* 担当者カラー（F-30） */
+  const colors = panel.querySelector('#dColors');
+  const assigneeLabel = panel.querySelector('#dAssignee');
+  const drawColors = ()=>{
+    colors.innerHTML = '';
+    const noneCell = document.createElement('div');
+    noneCell.className = 'color-cell none' + (card.colorIndex===null?' selected':'');
+    noneCell.innerHTML = '<span class="ck">なし</span>';
+    noneCell.onclick = ()=>{ card.colorIndex = null; drawColors(); save(); };
+    colors.appendChild(noneCell);
+    PALETTE.forEach((p,i)=>{
+      const cell = document.createElement('div');
+      cell.className = 'color-cell' + (card.colorIndex===i?' selected':'');
+      cell.style.background = p.color;
+      cell.title = board.assigneeNames[i] || p.name;
+      if (card.colorIndex===i) cell.innerHTML = '<span class="ck">✓</span>';
+      cell.onclick = ()=>{ card.colorIndex = i; drawColors(); save(); };
+      colors.appendChild(cell);
+    });
+    assigneeLabel.textContent = card.colorIndex===null ? '担当者: 未設定'
+      : `担当者: ${board.assigneeNames[card.colorIndex] || PALETTE[card.colorIndex].name}（${PALETTE[card.colorIndex].name}）`;
+  };
+  drawColors();
+
+  const due = panel.querySelector('#dDue');
+  due.value = card.dueDate;
+  due.onchange = ()=>{ card.dueDate = due.value; save(); };
+
+  /* Todo */
+  const todoList = panel.querySelector('#dTodos');
+  const drawTodos = ()=>{
+    todoList.innerHTML = '';
+    card.todos.forEach(t=>{
+      const row = document.createElement('div');
+      row.className = 'todo-item' + (t.done?' done':'');
+      row.innerHTML = `<input type="checkbox" ${t.done?'checked':''}>
+        <span class="todo-text">${esc(t.text)}</span>
+        <button class="todo-del" title="削除">✕</button>`;
+      row.querySelector('input').onchange = e=>{ t.done = e.target.checked; drawTodos(); save(); };
+      row.querySelector('.todo-del').onclick = ()=>{ card.todos = card.todos.filter(x=>x.id!==t.id); drawTodos(); save(); };
+      todoList.appendChild(row);
+    });
+  };
+  drawTodos();
+  const todoNew = panel.querySelector('#dTodoNew');
+  const addTodo = ()=>{
+    const v = todoNew.value.trim();
+    if (!v) return;
+    card.todos.push({id:uid(), text:v, done:false});
+    todoNew.value = '';
+    drawTodos(); save();
+  };
+  panel.querySelector('#dTodoAdd').onclick = addTodo;
+  todoNew.onkeydown = e=>{ if(e.key==='Enter') addTodo(); };
+
+  const memo = panel.querySelector('#dMemo');
+  memo.value = card.memo;
+  memo.oninput = ()=>{ card.memo = memo.value; save(); };
+
+  /* F-26: カード削除 */
+  panel.querySelector('#dDelete').onclick = ()=>{
+    confirmModal('カードの削除',
+      `カード「<b>${esc(card.title)||'（無題）'}</b>」を削除しますか？この操作は取り消せません。`,
+      '削除する', ()=>{
+        const st = storeOf(board.scope);
+        st.cards = st.cards.filter(c=>c.id!==card.id);
+        saveScope(board.scope);
+        closePanel(); renderBoard();
+      });
+  };
+
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden','false');
+  $('#panelOverlay').classList.add('open');
+}
+function refreshPanelPhase(card, board){
+  const sel = $('#detailPanel #dPhase');
+  if (sel) sel.value = card.phase;
+}
+function closePanel(){
+  state.editingCardId = null;
+  $('#detailPanel').classList.remove('open');
+  $('#detailPanel').setAttribute('aria-hidden','true');
+  $('#panelOverlay').classList.remove('open');
+}
+$('#panelOverlay').onclick = closePanel;
+
+/* ==========================================================
+ * 各種モーダル
+ * ========================================================== */
+/* F-01, F-02, F-40: 新規カテゴリ */
+function openNewBoardModal(){
+  openModal(`
+    <h3>新規カテゴリの作成</h3>
+    <div class="field"><label>カテゴリ名（必須・40文字まで）</label>
+      <input type="text" id="mName" maxlength="40" placeholder="例: 取締役会議事録"></div>
+    <div class="field"><label>公開範囲</label>
+      <div class="radio-row">
+        <label class="radio-card checked" data-v="private"><input type="radio" name="scope" value="private" checked>
+          <span class="dot dot-private"></span>個人用<br><small>自分のみ</small></label>
+        <label class="radio-card" data-v="shared"><input type="radio" name="scope" value="shared">
+          <span class="dot dot-shared"></span>共有<br><small>全員で閲覧・編集</small></label>
+      </div></div>
+    <div class="field" id="mPwField" style="display:none"><label>アクセスパスワード（任意）</label>
+      <input type="password" id="mPw" placeholder="未入力なら保護なし" autocomplete="new-password">
+      <div class="note-box" style="margin-top:8px">この保護はブラウザの開発者ツール等で技術的に迂回され得る簡易的な制限です。真に機密性の高い情報の保護には使用しないでください。</div></div>
+    <div class="modal-actions">
+      <button class="btn" data-act="cancel">キャンセル</button>
+      <button class="btn btn-primary" data-act="ok">作成</button>
+    </div>`, box=>{
+    const radios = box.querySelectorAll('.radio-card');
+    radios.forEach(rc=>{
+      rc.onclick = ()=>{
+        radios.forEach(x=>x.classList.remove('checked'));
+        rc.classList.add('checked');
+        rc.querySelector('input').checked = true;
+        box.querySelector('#mPwField').style.display = rc.dataset.v==='shared' ? '' : 'none';
+      };
+    });
+    box.querySelector('[data-act=cancel]').onclick = closeModal;
+    box.querySelector('[data-act=ok]').onclick = async ()=>{
+      const name = box.querySelector('#mName').value.trim().slice(0,40);
+      if (!name){ box.querySelector('#mName').focus(); return; }
+      const scope = box.querySelector('input[name=scope]:checked').value;
+      const pw = scope==='shared' ? box.querySelector('#mPw').value : '';
+      const board = {
+        id: uid(), name, scope,
+        phases: DEFAULT_PHASES.map(l=>({id:uid(), label:l})), /* F-10 */
+        passwordHash: pw ? await hashText(pw) : null,
+        assigneeNames: Array(10).fill(''),
+        createdAt: Date.now(),
+      };
+      storeOf(scope).boards.push(board);
+      state.activeBoardId = board.id;
+      state.filter = 'all';
+      if (pw && !state.unlocked.includes(board.id)){ state.unlocked.push(board.id); saveUnlocked(); }
+      saveScope(scope);
+      closeModal(); render();
+    };
+  });
+}
+
+/* F-20: 新規カード */
+function openNewCardModal(board, phase){
+  openModal(`
+    <h3>カードの追加 <small style="font-weight:400;font-size:12px;color:var(--ink-soft)">→ ${esc(phase.label)}</small></h3>
+    <div class="field"><label>タイトル（80文字まで）</label>
+      <input type="text" id="mTitle" maxlength="80" placeholder="例: 2026年6月定時取締役会 議事録"></div>
+    <div class="modal-actions">
+      <button class="btn" data-act="cancel">キャンセル</button>
+      <button class="btn btn-primary" data-act="ok">追加</button>
+    </div>`, box=>{
+    const input = box.querySelector('#mTitle');
+    const ok = ()=>{
+      const title = input.value.trim().slice(0,80);
+      if (!title){ input.focus(); return; }
+      storeOf(board.scope).cards.push({
+        id: uid(), boardId: board.id, scope: board.scope, phase: phase.id,
+        title, memo:'', dueDate:'', todos:[], colorIndex:null, createdAt: Date.now(),
+      });
+      saveScope(board.scope);
+      closeModal(); renderBoard();
+    };
+    input.onkeydown = e=>{ if(e.key==='Enter') ok(); };
+    box.querySelector('[data-act=cancel]').onclick = closeModal;
+    box.querySelector('[data-act=ok]').onclick = ok;
+  });
+}
+
+/* F-11: フェーズ追加 */
+function openNewPhaseModal(board){
+  openModal(`
+    <h3>フェーズの追加</h3>
+    <div class="field"><label>フェーズ名（12文字まで）</label>
+      <input type="text" id="mPhase" maxlength="12" placeholder="例: 社内確認中"></div>
+    <div class="modal-actions">
+      <button class="btn" data-act="cancel">キャンセル</button>
+      <button class="btn btn-primary" data-act="ok">追加</button>
+    </div>`, box=>{
+    const input = box.querySelector('#mPhase');
+    const ok = ()=>{
+      const label = input.value.trim().slice(0,12);
+      if (!label){ input.focus(); return; }
+      board.phases.push({id:uid(), label});
+      saveScope(board.scope);
+      closeModal(); renderBoard();
+    };
+    input.onkeydown = e=>{ if(e.key==='Enter') ok(); };
+    box.querySelector('[data-act=cancel]').onclick = closeModal;
+    box.querySelector('[data-act=ok]').onclick = ok;
+  });
+}
+
+/* F-32: 担当者管理 */
+function openAssigneeModal(board){
+  openModal(`
+    <h3>担当者カラー管理 <small style="font-weight:400;font-size:12px;color:var(--ink-soft)">${esc(board.name)}</small></h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px">各色に担当者名を割り当てます（20文字まで）。未設定の色は伝統色名で表示されます。</p>
+    <div class="assignee-grid" id="mAssignees"></div>
+    <div class="modal-actions"><button class="btn btn-primary" data-act="ok">閉じる</button></div>`,
+    box=>{
+    const grid = box.querySelector('#mAssignees');
+    PALETTE.forEach((p,i)=>{
+      const row = document.createElement('div');
+      row.className = 'assignee-row';
+      row.innerHTML = `<span class="swatch" style="background:${p.color}"></span>
+        <span class="cname">${esc(p.name)}</span>
+        <input type="text" maxlength="20" placeholder="担当者名（未設定）">`;
+      const input = row.querySelector('input');
+      input.value = board.assigneeNames[i] || '';
+      input.oninput = ()=>{
+        board.assigneeNames[i] = input.value.slice(0,20);
+        saveScope(board.scope);
+      };
+      grid.appendChild(row);
+    });
+    box.querySelector('[data-act=ok]').onclick = ()=>{ closeModal(); render(); };
+  });
+}
+
+/* ==========================================================
+ * パスワード保護（F-40〜F-45）
+ * ========================================================== */
+const PW_NOTE = 'この保護はブラウザの開発者ツール等で技術的に迂回され得る簡易的な制限です。真に機密性の高い情報の保護には使用しないでください。';
+
+function openPasswordModal(board){
+  const has = !!board.passwordHash;
+  openModal(`
+    <h3>パスワード${has?'の変更・解除':'の設定'} <small style="font-weight:400;font-size:12px;color:var(--ink-soft)">${esc(board.name)}</small></h3>
+    <div class="note-box">${PW_NOTE}</div>
+    ${has ? `<div class="field"><label>現在のパスワード</label>
+      <input type="password" id="mCur" autocomplete="off"></div>` : ''}
+    <div class="field"><label>${has?'新しいパスワード（空欄で保護を解除）':'パスワード'}</label>
+      <input type="password" id="mNew" autocomplete="new-password"></div>
+    <div class="lock-error" id="mErr"></div>
+    <div class="modal-actions">
+      <button class="btn" data-act="cancel">キャンセル</button>
+      <button class="btn btn-primary" data-act="ok">${has?'変更する':'設定する'}</button>
+    </div>`, box=>{
+    box.querySelector('[data-act=cancel]').onclick = closeModal;
+    box.querySelector('[data-act=ok]').onclick = async ()=>{
+      const err = box.querySelector('#mErr');
+      if (has){
+        const cur = box.querySelector('#mCur').value;
+        if (await hashText(cur) !== board.passwordHash){
+          err.textContent = '現在のパスワードが一致しません。'; return;
+        }
+      }
+      const nw = box.querySelector('#mNew').value;
+      if (nw){
+        board.passwordHash = await hashText(nw); /* F-41 */
+        if (!state.unlocked.includes(board.id)){ state.unlocked.push(board.id); saveUnlocked(); }
+        toast('パスワードを設定しました。','info');
+      } else {
+        if (!has){ err.textContent = 'パスワードを入力してください。'; return; }
+        board.passwordHash = null;
+        toast('パスワード保護を解除しました。','info');
+      }
+      saveScope(board.scope);
+      closeModal(); render();
+    };
+  });
+}
+
+/* F-42: ロック画面 */
+function renderLockScreen(area, board){
+  const el = document.createElement('div');
+  el.className = 'lock-screen';
+  el.innerHTML = `
+    <div class="lock-icon">🔒</div>
+    <h2>${esc(board.name)}</h2>
+    <p>このカテゴリはパスワードで保護されています。<br>閲覧するにはパスワードを入力してください。</p>
+    <input type="password" id="lockPw" placeholder="パスワード" autocomplete="off">
+    <div class="lock-error" id="lockErr"></div>
+    <button class="btn btn-primary" style="width:100%" id="lockBtn">解除する</button>
+    <p style="margin-top:14px;font-size:11px">${PW_NOTE}</p>`;
+  const input = el.querySelector('#lockPw');
+  const tryUnlock = async ()=>{
+    if (await hashText(input.value) === board.passwordHash){
+      state.unlocked.push(board.id); /* F-43 */
+      saveUnlocked();
+      render();
+    } else {
+      el.querySelector('#lockErr').textContent = 'パスワードが一致しません。';
+      input.value = ''; input.focus();
+    }
+  };
+  el.querySelector('#lockBtn').onclick = tryUnlock;
+  input.onkeydown = e=>{ if(e.key==='Enter') tryUnlock(); };
+  area.appendChild(el);
+  setTimeout(()=>input.focus(), 50);
+}
+
+/* ==========================================================
+ * 再読み込み（F-58）・起動処理（F-57）
+ * ========================================================== */
+async function reloadAll(showToast){
+  await loadPrivate();
+  const ok = await loadShared();
+  if (!allBoards().some(b=>b.id===state.activeBoardId))
+    state.activeBoardId = allBoards()[0]?.id || null;
+  render();
+  if (showToast && ok) toast('最新のデータを読み込みました。','info');
+}
+$('#reloadBtn').onclick = ()=>reloadAll(true);
+
+async function init(){
+  /* 環境ステータスの案内 */
+  if (!IS_CLAUDE && !SUPA_ON){
+    showBanner('sharedInfo','warn',
+      '共有データ用の外部データベース（Supabase）が未設定です。「共有」カテゴリのデータはこのブラウザ内（localStorage）にのみ保存され、他の人とは共有されません。共有するにはコード内の SUPABASE_URL / SUPABASE_ANON_KEY を設定してください。');
+  } else if (IS_CLAUDE && !SUPA_ON){
+    showBanner('sharedInfo','info',
+      '外部データベース未設定のため、共有データはClaudeの共有ストレージに保存されます（このアーティファクトを開ける人と共有されます）。');
+  }
+  /* 個人用保存の簡易チェック（F-57前段） */
+  if (!IS_CLAUDE){
+    try{
+      localStorage.setItem('__dockanban_test','1');
+      localStorage.removeItem('__dockanban_test');
+    }catch(e){
+      privStorageOk = false;
+      showBanner('privErr','error','このブラウザではプライベート保存機能（localStorage）が使えません。個人用データは保存されません（プライベートブラウズ等が原因の可能性）。');
+    }
+  }
+
+  await loadPrivate();
+  await loadShared();
+  state.activeBoardId = allBoards()[0]?.id || null;
+  render();
+
+  /* F-57: 共有データ0件時、一定時間後に1回だけ再取得 */
+  if (state.shared.boards.length === 0 && state.shared.cards.length === 0){
+    setTimeout(async ()=>{
+      const before = state.activeBoardId;
+      if (await loadShared()){
+        if (!before && allBoards().length) state.activeBoardId = allBoards()[0].id;
+        render();
+      }
+    }, 2500);
+  }
+}
+init();
+</script>
+</body>
+</html>
